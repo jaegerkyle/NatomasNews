@@ -7,14 +7,14 @@ import { getAllStories, getRelatedStories, getStoryBySlug, renderMdx } from "@/l
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
 import { formatDateTime } from "@/lib/date";
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = { params: <{ slug: string }> };
 
 export async function generateStaticParams() {
   return getAllStories().map((story) => ({ slug: story.slug }));
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+export async function generateMetadata({ params }: Props): <Metadata> {
+  const { slug } = params;
   const story = getStoryBySlug(slug);
 
   if (!story) {

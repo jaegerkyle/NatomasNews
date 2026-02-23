@@ -2,18 +2,12 @@ import { NextResponse } from "next/server";
 import { getEventBySlug } from "@/lib/content";
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
 
-type Props = { params: Promise<{ slug: string }> };
+import { NextRequest } from "next/server";
 
-function toICSDate(iso: string): string {
-  return new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-}
+type Props = { params: { slug: string } };
 
-function escapeICS(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
-}
-
-export async function GET(_: Request, { params }: Props) {
-  const { slug } = await params;
+export async function GET(_req: NextRequest, { params }: Props) {
+  const { slug } = params;
   const eventItem = getEventBySlug(slug);
 
   if (!eventItem) {

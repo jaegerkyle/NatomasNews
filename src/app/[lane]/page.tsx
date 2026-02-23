@@ -6,14 +6,14 @@ import { LANES, LANE_LABELS, type Lane } from "@/lib/constants";
 import { getStoriesByLane } from "@/lib/content";
 import { formatDateTime } from "@/lib/date";
 
-type Props = { params: Promise<{ lane: string }> };
+type Props = { params: { lane: string } };
 
 export async function generateStaticParams() {
   return LANES.filter((lane) => lane !== "events").map((lane) => ({ lane }));
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const laneParam = (await params).lane as Lane;
+export async function generateMetadata({ params }: Props): <Metadata> {
+  const lane = params.lane
   if (!LANES.includes(laneParam)) {
     return {};
   }
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function LanePage({ params }: Props) {
-  const laneParam = (await params).lane as Lane;
+  const laneParam = (params.lane as Lane;
 
   if (!LANES.includes(laneParam)) {
     notFound();

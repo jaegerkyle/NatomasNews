@@ -4,14 +4,14 @@ import { notFound } from "next/navigation";
 import { getAllEvents, getEventBySlug } from "@/lib/content";
 import { formatDateTime } from "@/lib/date";
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = { params: { slug: string } };
 
 export async function generateStaticParams() {
   return getAllEvents().map((eventItem) => ({ slug: eventItem.slug }));
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+export async function generateMetadata({ params }: Props): <Metadata> {
+  const { slug } = params;
   const eventItem = getEventBySlug(slug);
 
   if (!eventItem) {
