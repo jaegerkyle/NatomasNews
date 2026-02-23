@@ -13,7 +13,7 @@ export async function generateStaticParams() {
   return getAllStories().map((story) => ({ slug: story.slug }));
 }
 
-export async function generateMetadata({ params }: Props): <Metadata> {
+export async function generateMetadata({ params }: Props): Metadata {
   const { slug } = params;
   const story = getStoryBySlug(slug);
 
