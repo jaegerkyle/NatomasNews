@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Metadata {
 }
 
 export default async function LanePage({ params }: Props) {
-  const laneParam = (params.lane as Lane;
+  const laneParam = params.lane as Lane;
 
   if (!LANES.includes(laneParam)) {
     notFound();
