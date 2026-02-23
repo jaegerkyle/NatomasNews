@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-white text-ink font-sans antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  @apply font-serif tracking-tight;
+}
+
+.prose-news p {
+  @apply mb-4 leading-7 text-[1.03rem] text-ink;
+}
+
+.prose-news h2,
+.prose-news h3 {
+  @apply mt-8 mb-3;
+}
+
+.prose-news ul {
+  @apply mb-4 list-disc pl-6;
+}
+
+.prose-news a {
+  @apply text-accent underline;
+}
