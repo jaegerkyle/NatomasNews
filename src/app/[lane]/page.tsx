@@ -12,7 +12,7 @@ export async function generateStaticParams() {
   return LANES.filter((lane) => lane !== "events").map((lane) => ({ lane }));
 }
 
-export async function generateMetadata({ params }: Props): <Metadata> {
+export async function generateMetadata({ params }: Props): Metadata {
   const lane = params.lane
   if (!LANES.includes(laneParam)) {
     return {};

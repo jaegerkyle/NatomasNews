@@ -10,7 +10,7 @@ export async function generateStaticParams() {
   return getAllEvents().map((eventItem) => ({ slug: eventItem.slug }));
 }
 
-export async function generateMetadata({ params }: Props): <Metadata> {
+export async function generateMetadata({ params }: Props): Metadata {
   const { slug } = params;
   const eventItem = getEventBySlug(slug);
 
