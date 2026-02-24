@@ -1,129 +1,82 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { LaneBadge } from "@/components/LaneBadge";
-import { getAllStories, getRelatedStories, getStoryBySlug, renderMdx } from "@/lib/content";
+import { getAllStories, getStoryBySlug, renderMdx } from "@/lib/content";
+import { formatDate } from "@/lib/date";
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
-import { formatDateTime } from "@/lib/date";
 
 type Props = { params: { slug: string } };
+
+// Pull the MDX source string off the story object (field name can vary by scaffold)
+function getMdxSource(story: any): string {
+  if (typeof story?.body === "string") return story.body;
+  if (typeof story?.content === "string") return story.content;
+  if (typeof story?.mdx === "string") return story.mdx;
+  return "";
+}
 
 export async function generateStaticParams() {
   return getAllStories().map((story) => ({ slug: story.slug }));
 }
 
-export async function generateMetadata({ params }: Props): Metadata {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = params;
   const story = getStoryBySlug(slug);
 
-  if (!story) {
-    return {};
-  }
+  if (!story) return {};
 
-  const canonical = `/story/${story.slug}`;
+  const title = `${story.title} | ${SITE_NAME}`;
+  const description = story.dek ?? `Read ${story.title} on ${SITE_NAME}.`;
 
   return {
-    title: story.title,
-    description: story.summary ?? story.dek,
-    alternates: { canonical },
+    title,
+    description,
+    alternates: {
+      canonical: `${SITE_URL}/story/${story.slug}`,
+    },
     openGraph: {
+      title,
+      description,
+      url: `${SITE_URL}/story/${story.slug}`,
       type: "article",
-      title: story.title,
-      description: story.summary ?? story.dek,
-      publishedTime: story.publishedAt,
-      url: `${SITE_URL}${canonical}`,
-      images: story.coverImage ? [{ url: story.coverImage }] : undefined
     },
     twitter: {
       card: "summary_large_image",
-      title: story.title,
-      description: story.summary ?? story.dek
-    }
+      title,
+      description,
+    },
   };
 }
 
 export default async function StoryPage({ params }: Props) {
-  const { slug } = await params;
+  const { slug } = params;
   const story = getStoryBySlug(slug);
 
-  if (!story) {
-    notFound();
-  }
+  if (!story) notFound();
 
-  const article = await renderMdx(story.body);
-  const related = getRelatedStories(story, 3);
-  const canonicalUrl = `${SITE_URL}/story/${story.slug}`;
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "NewsArticle",
-    headline: story.title,
-    datePublished: story.publishedAt,
-    author: {
-      "@type": "Person",
-      name: story.author
-    },
-    mainEntityOfPage: canonicalUrl,
-    publisher: {
-      "@type": "Organization",
-      name: SITE_NAME
-    },
-    url: canonicalUrl,
-    description: story.summary ?? story.dek
-  };
+  const mdxSource = getMdxSource(story);
+  const content = await renderMdx(mdxSource);
 
   return (
-    <article className="mx-auto max-w-3xl">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div className="mb-5 flex items-center gap-3">
-        <LaneBadge lane={story.lane} />
-        <p className="text-sm text-muted">By {story.author}</p>
-        <p className="text-sm text-muted">{formatDateTime(story.publishedAt)}</p>
-      </div>
-
-      <h1 className="text-4xl leading-tight sm:text-5xl">{story.title}</h1>
-      <p className="mt-3 text-lg text-muted">{story.dek}</p>
-      <p className="mt-4 text-xs uppercase tracking-wider text-muted">{story.readingMinutes} min read</p>
-
-      {story.coverImage ? (
-        <figure className="mt-6">
-          <Image
-            src={story.coverImage}
-            alt={story.title}
-            width={1400}
-            height={840}
-            className="h-auto w-full rounded-xl border border-line object-cover"
-            priority
-          />
-        </figure>
-      ) : null}
-
-      <div className="mt-8 prose-news">{article}</div>
-
-      {story.tags.length ? (
-        <div className="mt-8 flex flex-wrap gap-2 text-xs text-muted">
-          {story.tags.map((tag) => (
-            <span key={tag} className="rounded-full bg-lane px-2.5 py-1">#{tag}</span>
-          ))}
+    <main className="mx-auto max-w-3xl px-4 py-10">
+      <header className="mb-8">
+        <div className="text-xs uppercase tracking-wide text-neutral-500">
+          {story.lane}
         </div>
-      ) : null}
 
-      {related.length ? (
-        <section className="mt-12 border-t border-line pt-8">
-          <h2 className="text-2xl">Related stories</h2>
-          <ul className="mt-4 space-y-3">
-            {related.map((item) => (
-              <li key={item.slug}>
-                <Link href={`/story/${item.slug}`} className="font-medium hover:underline">
-                  {item.title}
-                </Link>
-                <p className="text-sm text-muted">{item.dek}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-    </article>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+          {story.title}
+        </h1>
+
+        {story.dek ? (
+          <p className="mt-3 text-base text-neutral-700">{story.dek}</p>
+        ) : null}
+
+        <div className="mt-4 text-sm text-neutral-500">
+          {story.publishedAt ? formatDate(story.publishedAt) : null}
+        </div>
+      </header>
+
+      <article className="prose prose-neutral max-w-none">{content}</article>
+    </main>
   );
 }
