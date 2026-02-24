@@ -1,13 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getEventBySlug } from "@/lib/content";
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
 
-import { NextRequest } from "next/server";
+function toICSDate(iso: string) {
+  return new Date(iso).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+}
 
-type Props = { params: { slug: string } };
+function escapeICS(value: string) {
+  return value.replace(/\n/g, "\\n").replace(/,/g, "\\,");
+}
 
-export async function GET(_req: NextRequest, { params }: Props) {
-  const { slug } = params;
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  const { slug } = await params;
   const eventItem = getEventBySlug(slug);
 
   if (!eventItem) {
@@ -30,17 +37,19 @@ export async function GET(_req: NextRequest, { params }: Props) {
     `DTSTART:${starts}`,
     `DTEND:${ends}`,
     `SUMMARY:${escapeICS(eventItem.title)}`,
-    `DESCRIPTION:${escapeICS(eventItem.description)}`,
-    `LOCATION:${escapeICS([eventItem.venue, eventItem.address].filter(Boolean).join(", "))}`,
+    `DESCRIPTION:${escapeICS(eventItem.description ?? "")}`,
+    `LOCATION:${escapeICS(
+      [eventItem.venue, eventItem.address].filter(Boolean).join(", ")
+    )}`,
     `URL:${SITE_URL}/events`,
     "END:VEVENT",
-    "END:VCALENDAR"
+    "END:VCALENDAR",
   ].join("\r\n");
 
   return new NextResponse(ics, {
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
-      "Content-Disposition": `attachment; filename=\"${slug}.ics\"`
-    }
+      "Content-Disposition": `attachment; filename="${slug}.ics"`,
+    },
   });
 }
