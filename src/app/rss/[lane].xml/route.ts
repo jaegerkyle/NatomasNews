@@ -5,15 +5,16 @@ import { buildRssXml } from "@/lib/rss";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { lane: string } }
+  { params }: { params: Promise<{ lane: string }> }
 ) {
-  const lane = params.lane
+  const { lane } = await params;
+  const laneTyped = lane as Lane;
 
-  if (!LANES.includes(lane)) {
+  if (!LANES.includes(laneTyped)) {
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const xml = buildRssXml(getStoriesByLane(lane), lane);
+  const xml = buildRssXml(getStoriesByLane(laneTyped), laneTyped);
 
   return new NextResponse(xml, {
     headers: {
