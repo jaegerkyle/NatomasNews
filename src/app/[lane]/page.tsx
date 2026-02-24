@@ -1,69 +1,77 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { LaneBadge } from "@/components/LaneBadge";
-import { LANES, LANE_LABELS, type Lane } from "@/lib/constants";
+import { notFound } from "next/navigation";
+import { LANES, type Lane } from "@/lib/constants";
 import { getStoriesByLane } from "@/lib/content";
-import { formatDateTime } from "@/lib/date";
 
 type Props = { params: { lane: string } };
 
-export async function generateStaticParams() {
-  return LANES.filter((lane) => lane !== "events").map((lane) => ({ lane }));
+function laneLabel(lane: Lane) {
+  return lane
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
 }
 
-export async function generateMetadata({ params }: Props): Metadata {
-  const lane = params.lane
-  if (!LANES.includes(laneParam)) {
-    return {};
-  }
+export async function generateStaticParams() {
+  return LANES.map((lane) => ({ lane }));
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const laneParam = params.lane as Lane;
+
+  if (!LANES.includes(laneParam)) return {};
+
+  const label = laneLabel(laneParam);
 
   return {
-    title: LANE_LABELS[laneParam],
-    alternates: {
-      canonical: laneParam === "events" ? "/events" : `/${laneParam}`
-    },
-    openGraph: {
-      title: `${LANE_LABELS[laneParam]} | Natomas.co`
-    }
+    title: `${label} | Natomas.co`,
+    description: `Latest ${label.toLowerCase()} coverage from Natomas.co.`,
+    alternates: { canonical: `/${laneParam}` },
   };
 }
 
 export default async function LanePage({ params }: Props) {
   const laneParam = params.lane as Lane;
 
-  if (!LANES.includes(laneParam)) {
-    notFound();
-  }
-
-  if (laneParam === "events") {
-    redirect("/events");
-  }
+  if (!LANES.includes(laneParam)) notFound();
 
   const stories = getStoriesByLane(laneParam);
+  const label = laneLabel(laneParam);
 
   return (
-    <section>
-      <h1 className="text-4xl">{LANE_LABELS[laneParam]}</h1>
-      <p className="mt-2 text-sm text-muted">Latest reporting in this lane.</p>
-      <div className="mt-8 space-y-5">
+    <main className="mx-auto max-w-3xl px-4 py-10">
+      <header className="mb-6">
+        <h1 className="text-3xl font-semibold tracking-tight">{label}</h1>
+        <p className="mt-2 text-sm text-neutral-600">
+          Latest stories in {label.toLowerCase()}.
+        </p>
+      </header>
+
+      <section className="space-y-4">
         {stories.map((story) => (
-          <article key={story.slug} className="rounded-xl border border-line p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <LaneBadge lane={story.lane} />
-              <time className="text-xs text-muted" dateTime={story.publishedAt}>
-                {formatDateTime(story.publishedAt)}
-              </time>
-            </div>
-            <h2 className="font-serif text-2xl">
-              <Link href={`/story/${story.slug}`} className="hover:underline">
+          <article
+            key={story.slug}
+            className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm"
+          >
+            <Link href={`/story/${story.slug}`} className="block">
+              <h2 className="text-xl font-semibold leading-snug">
                 {story.title}
-              </Link>
-            </h2>
-            <p className="mt-2 text-sm text-muted">{story.dek}</p>
+              </h2>
+
+              {story.dek ? (
+                <p className="mt-2 text-sm text-neutral-700">{story.dek}</p>
+              ) : null}
+
+              {story.publishedAt ? (
+                <div className="mt-3 text-xs text-neutral-500">
+                  {story.publishedAt}
+                </div>
+              ) : null}
+            </Link>
           </article>
         ))}
-      </div>
-    </section>
+      </section>
+    </main>
   );
 }
